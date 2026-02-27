@@ -21,6 +21,14 @@ export class NeutronConfig {
     public masterkey_keychain_service: string = "NeutronServer";
     public masterkey_keychain_account: string = "masterkey";
 
+    // ssl options
+    public ssl_enabled: boolean = false;
+    public ssl_key: string = "";
+    public ssl_cert: string = "";
+
+    // database options
+    public database_type: string = "postgres";
+
     private content: any = {};
 
     constructor(content: any = {}) {
@@ -55,6 +63,12 @@ export class NeutronConfig {
         this.store_master_key_in_keychain = getPath<boolean>("masterkey.store_in_keychain", this.store_master_key_in_keychain);
         this.masterkey_keychain_service = getPath<string>("masterkey.keychain_service", this.masterkey_keychain_service);
         this.masterkey_keychain_account = getPath<string>("masterkey.keychain_account", this.masterkey_keychain_account);
+
+        this.ssl_enabled = getPath<boolean>("server.ssl.enabled", this.ssl_enabled);
+        this.ssl_key = getPath<string>("server.ssl.key", this.ssl_key);
+        this.ssl_cert = getPath<string>("server.ssl.cert", this.ssl_cert);
+
+        this.database_type = getPath<string>("database.type", this.database_type);
     }
 
     /**
@@ -90,8 +104,10 @@ export class NeutronConfig {
      * Get a nested value from the YAML content with optional fallback
      * Example: config.getPath("neutron.data_folder", "./default_data")
      */
-    public getPath<T = any>(pathStr: string, fallback?: T): T | undefined {
+
+    public getPathOrDefault<T = any>(pathStr: string, fallback: T): T {
         if (!pathStr) return fallback;
+
         const keys = pathStr.split(".");
         let current: any = this.content;
 
@@ -102,6 +118,7 @@ export class NeutronConfig {
                 return fallback;
             }
         }
-        return current as T;
+
+        return (current !== undefined && current !== null ? current : fallback) as T;
     }
 }

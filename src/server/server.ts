@@ -11,4 +11,5 @@ export async function run(...args: string[]) {
 
     new NeutronServer();
     await NeutronServer.getInstance().init(configPath);
+    NeutronServer.getInstance().start();
 }
