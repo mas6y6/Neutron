@@ -1,4 +1,4 @@
-import express from "express";
+import express, {ErrorRequestHandler, NextFunction} from "express";
 import * as http from "node:http";
 import * as path from "node:path";
 import * as fs from "fs/promises";
@@ -10,20 +10,11 @@ import * as https from "node:https";
 import {WebSocketServer, WebSocket} from "ws";
 import {IncomingMessage} from "node:http";
 import {Socket} from "node:net";
+import {renderTemplate} from "./Renderer";
 import {Database} from "./database/Database";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import {User} from "./database/entities/User";
-
-// @ts-ignore
-import styleCss from "./static/css/style.css";
-// @ts-ignore
-import testJs from "./static/js/test.js";
-
-const embeddedStatic: Record<string, { content: string, type: string }> = {
-    "css/style.css": { content: styleCss, type: "text/css" },
-    "js/test.js": { content: testJs, type: "application/javascript" }
-};
 
 export class NeutronServer {
     public static instance: NeutronServer;
@@ -56,6 +47,7 @@ export class NeutronServer {
 
     async init(configPath: string = "config.yml") {
         try {
+            await fs.access(configPath);
             this.config = await NeutronConfig.loadSafe(configPath);
 
             this.port = this.config.port;
@@ -80,32 +72,22 @@ export class NeutronServer {
                 maxFiles: this.config.logging_max_files,
             });
         } catch (err) {
-            console.error("Failed to initialize server config/logger:", err);
-            // Ensure we have at least a default config and logger if something goes wrong
-            if (!this.config) this.config = new NeutronConfig();
-            if (!this.logger) {
-                this.logger = await createLogger({
-                    level: "info",
-                    console: true,
-                    file: false
-                });
+            if ((err as NodeJS.ErrnoException).code === "ENOENT") {
+                this.config = new NeutronConfig();
+                const dataFolderPath = path.resolve(this.config.data_folder);
+                await fs.mkdir(dataFolderPath, { recursive: true });
+            } else {
+                console.error(err);
             }
         }
 
         try {
-            const masterkeyPath = path.isAbsolute(this.config.masterkey)
-                ? this.config.masterkey
-                : path.join(this.config.data_folder, path.basename(this.config.masterkey));
-            
-            await fs.access(masterkeyPath);
-            let base64 = await fs.readFile(masterkeyPath, "utf-8");
+            await fs.access(path.join(this.config.data_folder, this.config.masterkey));
+            let base64 = await fs.readFile(path.join(this.config.data_folder, this.config.masterkey), "utf-8");
             this.masterkey = Buffer.from(base64, "base64");
         } catch {
             this.masterkey = crypto.randomBytes(32);
-            const masterkeyPath = path.isAbsolute(this.config.masterkey)
-                ? this.config.masterkey
-                : path.join(this.config.data_folder, path.basename(this.config.masterkey));
-            await fs.writeFile(masterkeyPath, this.masterkey.toString("base64"), "utf-8");
+            await fs.writeFile(path.join(this.config.data_folder, this.config.masterkey), this.masterkey.toString("base64"), "utf-8");
         }
 
         this.logger.info("Starting \""+this.config.database_type+"\" database...");
@@ -152,17 +134,7 @@ export class NeutronServer {
 
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
-        this.app.use('/static', express.static(path.join(process.cwd(), 'static')));
-
-        this.app.get<{ path: string }>('/static/:path(.*)', (req, res, next) => {
-            const file = req.params.path;
-
-            const staticFile = embeddedStatic[file];
-            if (!staticFile) return next();
-
-            res.setHeader("Content-Type", staticFile.type);
-            res.send(staticFile.content);
-        });
+        this.app.use('/static', express.static(path.join(__dirname, 'public')));
 
         this.server.on('upgrade', (request: IncomingMessage, socket: Socket, head: Buffer) => {
             const handler = request.url ? this.wsRouteHandlers[request.url] : undefined;
@@ -177,10 +149,7 @@ export class NeutronServer {
             });
         });
 
-        // In SEA/Bundled environment, we don't dynamically load routes from a directory
-        // instead they should be explicitly imported/required to be included in the bundle.
-        require("./routes/main");
-
+        require("./routes/main")
         require("./error_routes")
 
         if (await Database.getDataSource().getRepository(User).count() === 0) {

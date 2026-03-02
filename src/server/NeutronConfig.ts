@@ -1,9 +1,6 @@
 import fs from "fs/promises";
 import yaml from "js-yaml";
-import pathModule from "path";
-
-// @ts-ignore
-import defaultConfigYml from "./assets/defaults/config.yml";
+import pathNode from "path";
 
 export class NeutronConfig {
     // Server options
@@ -21,7 +18,7 @@ export class NeutronConfig {
     public logging_max_files: string = "14d";
 
     // master_key
-    public masterkey: string = "data/masterkey.key";
+    public masterkey: string = "masterkey.key";
 
     // ssl options
     public ssl_enabled: boolean = false;
@@ -34,7 +31,7 @@ export class NeutronConfig {
     public rate_limit_max: number = 100;
 
     // database options
-    public database_type: string = "sqlite";
+    public database_type: string = "postgres";
 
     private content: any = {};
 
@@ -83,13 +80,13 @@ export class NeutronConfig {
     /**
      * Safely load a NeutronConfig from a YAML file
      */
-
     public static async loadSafe(path: string = "config.yml"): Promise<NeutronConfig> {
         try {
             const fileContents = await fs.readFile(path, "utf8");
             const parsed = yaml.load(fileContents);
             return this.safeConstruct(parsed);
         } catch (err: any) {
+            const defaultConfigYml = await fs.readFile(pathNode.join(__dirname, "assets", "defaults", "config.yml"), "utf8");
             if (err.code === "ENOENT") {
                 console.warn(`Config not found at ${path}, copying default config.`);
                 try {
