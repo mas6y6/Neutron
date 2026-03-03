@@ -9,6 +9,6 @@ export const renderData = {
 };
 
 export async function renderTemplate(file: string, data: any = {}) {
-    const templatePath = path.join(__dirname, "templates", file);
+    const templatePath = path.join(__dirname, "../client/", file);
     return ejs.render(await fs.readFile(templatePath, "utf8"), { ...data , ...renderData }, { async: true });
 }

@@ -10,7 +10,6 @@ import * as https from "node:https";
 import {WebSocketServer, WebSocket} from "ws";
 import {IncomingMessage} from "node:http";
 import {Socket} from "node:net";
-import {renderTemplate} from "./Renderer";
 import {Database} from "./database/Database";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -134,7 +133,8 @@ export class NeutronServer {
 
         this.app.use(express.json());
         this.app.use(express.urlencoded({ extended: true }));
-        this.app.use('/static', express.static(path.join(__dirname, 'static')));
+        this.app.use('/public', express.static(path.join(__dirname, '../client/public')));
+        this.app.use('/assets', express.static(path.join(__dirname, '../client/assets')));
 
         this.server.on('upgrade', (request: IncomingMessage, socket: Socket, head: Buffer) => {
             const handler = request.url ? this.wsRouteHandlers[request.url] : undefined;

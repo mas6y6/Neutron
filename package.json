@@ -5,8 +5,9 @@
   "main": "dist/main.js",
   "private": true,
   "scripts": {
-    "build": "npm run build-ts && npm run copy-assets",
+    "build": "npm run build-client && npm run build-ts && npm run copy-assets",
     "build-ts": "tsc --outDir dist",
+    "build-client": "vite build",
     "copy-assets": "cpx \"src/server/{templates,assets,static}/**/*.{yml,html,css,js,png,jpg,svg}\" dist/server",
     "start:server": "npm run clean && npm run build && node ./dist/index.js",
     "test:server": "npm run clean && npm run build && node ./dist/index.js --config test/config.yml",
@@ -18,13 +19,17 @@
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^25.3.2",
     "@types/pg": "^8.16.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "@types/sqlite3": "^3.1.11",
     "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^5.1.4",
     "cpx": "^1.2.1",
     "electron": "^40.6.0",
     "rimraf": "^6.1.3",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
   },
   "dependencies": {
     "commander": "^14.0.3",
@@ -36,6 +41,8 @@
     "mysql2": "^3.18.2",
     "node-notifier": "^10.0.1",
     "pg": "^8.19.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "reflect-metadata": "^0.2.2",
     "sqlite3": "^5.1.7",
     "typeorm": "^0.3.28",
