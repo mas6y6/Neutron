@@ -1,13 +1,47 @@
-import React from 'react'
-import './css/font.css'
+import React, { useRef, useEffect } from "react";
+import { Modal, ModalContainer, ModalContainerHandle, ModalHandle } from "./Modals";
+import {NeutronEncryption} from "./NeutronEncryption";
+import { LoadingCircle } from "./UI";
+import "./css/Font.css";
+import "./css/App.css";
+
+const enc = new NeutronEncryption();
 
 function App() {
-  return (
-    <div className="App">
-      <h1>Neutron + React</h1>
-      <p>React is now supported in Neutron!</p>
-    </div>
-  )
+    const containerRef = useRef<ModalContainerHandle>(null);
+    const modalRef = useRef<ModalHandle>(null);
+
+    useEffect(() => {
+        async function main() {
+            containerRef.current?.set(
+                <Modal ref={modalRef}>
+                    <LoadingCircle />
+                </Modal>
+            );
+
+            await new Promise(requestAnimationFrame);
+            modalRef.current?.showModal();
+
+            await enc.handshake();
+        }
+
+        main().catch((e) => {
+            console.error(e);
+            containerRef.current?.set(
+                <Modal ref={modalRef}>
+                    <h1>Error</h1>
+                    <p>An error occurred while loading Neutron.</p>
+                    <p>Please reload to try again.</p>
+                </Modal>
+            );
+        });
+    }, []);
+
+    return (
+        <div className="App">
+            <ModalContainer ref={containerRef} />
+        </div>
+    );
 }
 
-export default App
+export default App;

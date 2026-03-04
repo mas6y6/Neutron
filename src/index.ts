@@ -2,7 +2,6 @@ import {NeutronServer} from "./server/NeutronServer";
 import {Command} from "commander";
 
 const program = new Command();
-
 program
     .name("neutron")
     .description("Neutron Server")
