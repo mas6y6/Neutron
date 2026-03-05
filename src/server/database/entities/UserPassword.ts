@@ -1,4 +1,5 @@
-import {Entity, Column, PrimaryColumn} from "typeorm";
+import {Entity, Column, PrimaryColumn, JoinColumn, OneToOne} from "typeorm";
+import {User} from "./User";
 
 @Entity("users_passwords")
 export class UserPassword {
@@ -6,5 +7,9 @@ export class UserPassword {
     id!: string;
 
     @Column({ type: "varchar", length: 60 })
-    passwordHash!: string;
+    password!: string;
+
+    @OneToOne(() => User, user => user.password)
+    @JoinColumn({ name: "id" })
+    user!: User;
 }

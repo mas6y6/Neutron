@@ -33,6 +33,10 @@ export class NeutronConfig {
     // proxy options
     public proxy_base_path: string = "/";
 
+    // access token options
+    public access_token_expiration: string = "15m";
+    public refresh_token_expiration: string = "7d";
+
     private content: any = {};
 
     constructor(content: any = {}) {
@@ -77,6 +81,9 @@ export class NeutronConfig {
         this.proxy_base_path = getPath<string>("server.proxy_base_path", this.proxy_base_path);
         if (!this.proxy_base_path.startsWith("/")) this.proxy_base_path = "/" + this.proxy_base_path;
         if (!this.proxy_base_path.endsWith("/")) this.proxy_base_path = this.proxy_base_path + "/";
+
+        this.access_token_expiration = getPath<string>("server.access_token.expiration", this.access_token_expiration);
+        this.refresh_token_expiration = getPath<string>("server.refresh_token.expiration", this.refresh_token_expiration);
     }
 
     /**

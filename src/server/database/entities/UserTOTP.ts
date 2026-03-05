@@ -1,4 +1,5 @@
-import {Entity, Column, PrimaryColumn} from "typeorm";
+import {Entity, Column, PrimaryColumn, JoinColumn, OneToOne} from "typeorm";
+import {User} from "./User";
 
 @Entity("users_totp")
 export class UserTOTP {
@@ -7,4 +8,8 @@ export class UserTOTP {
 
     @Column({ type: "varchar", length: 64 })
     secret!: string;
+
+    @OneToOne(() => User, user => user.totp)
+    @JoinColumn({ name: "id" }) // link by same UUID
+    user!: User;
 }

@@ -34,6 +34,11 @@ export class NeutronServer {
     public serverTitle: string = "Neutron";
     public superadminKey: string = "";
 
+    private ACCESS_TOKEN_SECRET: string = crypto.randomBytes(32).toString("hex");
+    private ACCESS_TOKEN_EXPIRATION_TIME: string = "15m";
+    private REFRESH_TOKEN_SECRET: string = crypto.randomBytes(32).toString("hex");
+    private REFRESH_TOKEN_EXPIRATION_TIME: string = "7d";
+
     public static getInstance(): NeutronServer {
         if (!NeutronServer.instance) {
             throw new Error("NeutronServer instance not initialized");
@@ -93,6 +98,23 @@ export class NeutronServer {
             this.masterkey = crypto.randomBytes(32);
             await fs.writeFile(path.join(this.config.data_folder, "masterkey.key"), this.masterkey.toString("base64"), "utf-8");
         }
+
+        try {
+            await fs.access(path.join(this.config.data_folder,"access_token.key"));
+            this.ACCESS_TOKEN_SECRET = await fs.readFile(path.join(this.config.data_folder,"access_token.key"), "utf-8");
+        } catch {
+            await fs.writeFile(path.join(this.config.data_folder,"access_token.key"), this.ACCESS_TOKEN_SECRET, "utf-8");
+        }
+
+        try {
+            await fs.access(path.join(this.config.data_folder,"refresh_token.key"));
+            this.REFRESH_TOKEN_SECRET = await fs.readFile(path.join(this.config.data_folder,"refresh_token.key"), "utf-8");
+        } catch {
+            await fs.writeFile(path.join(this.config.data_folder,"refresh_token.key"), this.REFRESH_TOKEN_SECRET, "utf-8");
+        }
+
+        this.REFRESH_TOKEN_EXPIRATION_TIME = this.config.refresh_token_expiration
+        this.ACCESS_TOKEN_EXPIRATION_TIME = this.config.access_token_expiration
 
         this.logger.info("Starting \""+this.config.database_type+"\" database...");
         this.database = Database.getInstance();

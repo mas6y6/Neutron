@@ -1,4 +1,6 @@
-import {Entity, Column, PrimaryGeneratedColumn} from "typeorm";
+import {Entity, Column, PrimaryGeneratedColumn, OneToOne} from "typeorm";
+import {UserPassword} from "./UserPassword";
+import {UserTOTP} from "./UserTOTP";
 
 @Entity("users")
 export class User {
@@ -13,4 +15,17 @@ export class User {
 
     @Column({ default: false })
     superadmin!: boolean;
+
+    @Column({ default: false })
+    admin!: boolean;
+
+    @Column({ nullable: true })
+    refresh_token!: string;
+
+    // relations
+    @OneToOne(() => UserPassword, password => password.user, { cascade: true })
+    password?: UserPassword;
+
+    @OneToOne(() => UserTOTP, totp => totp.user, { cascade: true })
+    totp?: UserTOTP;
 }
