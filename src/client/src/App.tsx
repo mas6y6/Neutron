@@ -8,7 +8,7 @@ import {
     NotificationContainer,
     NotificationHandle
 } from "./UI";
-import {SetupInit} from "./UI/setup";
+import {SetupInit} from "./modals/setup";
 import "./css/Font.css";
 import "./css/App.css";
 import {animationCooldown, fetchWithCsrf, sleep} from "./utils";

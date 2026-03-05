@@ -9,11 +9,21 @@ export function SetupInit() {
     const modal = useRef<ModalHandle>(null);
 
     async function onClick() {
+        const key = entry.current?.value.trim() || "";
+
+        if (!key) {
+            notificationRef.current?.add({
+                title: "Error",
+                content: "Please fill out all fields.",
+                type: "error",
+            });
+            return;
+        }
+
         modal.current?.hideModal();
         await animationCooldown();
         const loadingModalRef = createRef<ModalHandle>();
         containerRef?.current?.set(<LoadingModal ref={loadingModalRef}/>);
-        let key: string = entry.current?.value || "";
 
         let res = (await fetchWithCsrf("/api/check-superadmin-key", {
             method: "POST",
@@ -25,8 +35,8 @@ export function SetupInit() {
             })
         }));
 
-        let data = await res.json();
-        if (data.success) {
+        const data = await res.json();
+        if (res.ok) {
             loadingModalRef.current?.hideModal();
             await animationCooldown();
             containerRef?.current?.set(<SetupAdminAccountCreation superAdminKey={key}/>);
@@ -70,12 +80,57 @@ export function SetupAdminAccountCreation({superAdminKey}: SetupAdminAccountCrea
     const modal = useRef<ModalHandle>(null);
     const usernameEntry = useRef<HTMLInputElement>(null);
     const passwordEntry = useRef<HTMLInputElement>(null);
+    const displayNameEntry = useRef<HTMLInputElement>(null);
 
     async function onClick() {
+        let username = usernameEntry.current?.value.trim() || "";
+        let password = passwordEntry.current?.value.trim() || "";
+        let displayName = displayNameEntry.current?.value.trim() || "";
+
+        if (!username) {
+            notificationRef.current?.add({
+                title: "Error",
+                content: "Please fill out all fields.",
+                type: "error",
+            });
+            return;
+        }
+
+        if (!password) {
+            notificationRef.current?.add({
+                title: "Error",
+                content: "Please fill out all fields.",
+                type: "error",
+            });
+            return;
+        }
+
+        if (!displayName) {
+            notificationRef.current?.add({
+                title: "Error",
+                content: "Please fill out all fields.",
+                type: "error",
+            });
+            return;
+        }
+
         modal.current?.hideModal();
         await animationCooldown();
         const loadingModalRef = createRef<ModalHandle>();
         containerRef?.current?.set(<LoadingModal ref={loadingModalRef}/>);
+
+        let res = (await fetchWithCsrf("/api/create-superadmin", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                username: username,
+                password: password,
+                displayName: displayName,
+                superAdminKey: superAdminKey
+            })
+        }));
 
 
     }
@@ -89,6 +144,7 @@ export function SetupAdminAccountCreation({superAdminKey}: SetupAdminAccountCrea
 
             <div style={{display: "flex", flexDirection: "column", gap: "10px"}}>
                 <Entry ref={usernameEntry} placeholder="Username" autoComplete={"username"}/>
+                <Entry ref={displayNameEntry} placeholder="Display name"/>
                 <PasswordEntry ref={passwordEntry} placeholder="Password" autoComplete={"new-password"}/>
                 <Button onClick={onClick}>Create</Button>
             </div>
