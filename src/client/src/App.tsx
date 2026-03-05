@@ -30,7 +30,7 @@ function App() {
                 notificationRef.current?.add(
                     {
                         title: "Warning",
-                        content: "Your server is not using SSL. This is not recommended for production.",
+                        content: "This server is not using SSL. This is not recommended for production.",
                         type: "warning"
                     }
                 )
