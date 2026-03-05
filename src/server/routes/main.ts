@@ -12,6 +12,7 @@ server.app.get('/api/status',async (req,res) => {
         version: server.version,
         motd: server.motd,
         serverTitle: server.serverTitle,
-        firstStart: server.firstStart
+        firstStart: server.firstStart,
+        ssl_enabled: server.config.ssl_enabled
     })
 });

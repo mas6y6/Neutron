@@ -26,6 +26,15 @@ function App() {
             );
 
             let server_status = await (await fetch("/api/status")).json();
+            if (!(server_status.ssl_enabled)) {
+                notificationRef.current?.add(
+                    {
+                        title: "Warning",
+                        content: "Your server is not using SSL. This is not recommended for production.",
+                        type: "warning"
+                    }
+                )
+            }
 
             await animationCooldown();
             if (server_status.firstStart == true) {

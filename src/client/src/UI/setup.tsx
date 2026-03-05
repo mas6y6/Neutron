@@ -1,7 +1,7 @@
 import {Button, LoadingModal, Modal, ModalHandle} from "../UI";
 import React, {useRef} from "react";
 import {Entry} from "../UI";
-import {containerRef} from "../App";
+import {containerRef, notificationRef} from "../App";
 import {animationCooldown, sleep} from "../utils";
 
 export function SetupInit() {
@@ -13,6 +13,14 @@ export function SetupInit() {
         modal.current?.hideModal();
         await animationCooldown();
         containerRef?.current?.set(<LoadingModal />);
+
+
+
+        notificationRef.current?.add({
+            title: "Error",
+            content: "Please check your superadmin key and try again.",
+            type: "error"
+        });
     }
 
     return (

@@ -162,14 +162,35 @@ export class NeutronServer {
         if (this.firstStart) {
             this.superadminKey = crypto.randomBytes(12).toString("hex");
 
-            this.logger.info("-------------------------------------------------------");
-            this.logger.info("");
-            this.logger.info("Your server user database is empty! ( Assuming this is your first time starting Neutron )");
-            this.logger.info("");
-            this.logger.info(`Your superadmin key for this server is: ${this.superadminKey}`);
-            this.logger.info("THIS KEY CANNOT BE USED MORE THAN ONCE!");
-            this.logger.info("");
-            this.logger.info("-------------------------------------------------------");
+            const firstStartMessage = `
+=======================================================
+FIRST TIME SETUP: Superadmin Key Generated
+-------------------------------------------------------
+Your server's user database is empty (first-time startup).
+
+🔑  SUPERADMIN KEY: ${this.superadminKey}
+
+⚠️  IMPORTANT:
+- This key is **one-time use only**
+- DO NOT SHARE THIS KEY WITH ANYONE
+
+=======================================================
+`;
+            this.logger.info(firstStartMessage);
+        }
+
+        if (!this.config.ssl_enabled) {
+            const warning = `
+=======================================================
+⚠️  WARNING: SSL is NOT enabled!
+-------------------------------------------------------
+Your Neutron server is running without SSL. This means:
+- All traffic, including chat messages, is sent in plain text
+- Your server is vulnerable to eavesdropping or tampering
+
+=======================================================
+            `;
+            this.logger.warn(warning);
         }
     }
 

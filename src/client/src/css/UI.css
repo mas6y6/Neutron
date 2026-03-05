@@ -164,11 +164,11 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     min-width: 250px;
     max-width: 400px;
-    animation: slideIn 0.3s ease forwards;
+    animation: slideIn 0.5s ease forwards;
 }
 
 .Notification.closing {
-    animation: slideOut 0.3s ease forwards;
+    animation: slideOut 0.5s ease forwards;
 }
 
 @keyframes slideIn {
@@ -209,6 +209,10 @@
 
 .Notification.success {
     border-left: 4px solid #4caf50;
+}
+
+.Notification.warning {
+    border-left: 4px solid #ffdd00;
 }
 
 .Notification.info {
