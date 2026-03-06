@@ -131,8 +131,6 @@ export function SetupAdminAccountCreation({superAdminKey}: SetupAdminAccountCrea
                 superAdminKey: superAdminKey
             })
         }));
-
-
     }
 
     return (
@@ -146,7 +144,7 @@ export function SetupAdminAccountCreation({superAdminKey}: SetupAdminAccountCrea
                 <Entry ref={usernameEntry} placeholder="Username" autoComplete={"username"}/>
                 <Entry ref={displayNameEntry} placeholder="Display name"/>
                 <PasswordEntry ref={passwordEntry} placeholder="Password" autoComplete={"new-password"}/>
-                <Button onClick={onClick}>Create</Button>
+                <Button className="btn btn-primary" onClick={onClick}>Create</Button>
             </div>
         </Modal>
     );

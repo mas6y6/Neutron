@@ -1,0 +1,56 @@
+.NotificationContainer {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  z-index: $zindex-toast;
+}
+
+.Notification {
+  background-color: var(--background-color);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--border-color);
+  color: var(--text-color);
+  padding: ($spacer * 0.75) ($spacer * 1.25);
+  border-radius: $border-radius-lg;
+  box-shadow: $box-shadow;
+  min-width: 250px;
+  max-width: 400px;
+  animation: slideIn 0.5s ease forwards;
+}
+
+.Notification.closing {
+  animation: slideOut 0.5s ease forwards;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(100%); }
+}
+
+.NotificationTitle {
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacer * 0.25;
+}
+
+.NotificationContent {
+  font-size: 0.9em;
+  opacity: 0.9;
+}
+
+.Notification.error { border-left: 4px solid $danger; }
+.Notification.success { border-left: 4px solid $success; }
+.Notification.warning { border-left: 4px solid $warning; }
+.Notification.info { border-left: 4px solid var(--accent-color); }
+
+.subtext {
+  font-size: 0.8em;
+  opacity: 0.8;
+}

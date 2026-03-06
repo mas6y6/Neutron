@@ -1,0 +1,49 @@
+// Custom global styles and variables from App.css
+:root {
+  --background-color: #{$gray-800};
+  --default-app-background: #{$gray-800};
+  --border-color: #{$gray-600};
+  --text-color: #{$white};
+  --accent-color: #{$white};
+  --loading-line-color: #{$white};
+  --loading-out-color: #{$gray-600};
+
+  @media (prefers-color-scheme: dark) {
+    --background-color: #{$gray-800};
+    --default-app-background: #{$gray-800};
+    --border-color: #{$gray-600};
+    --text-color: #{$white};
+    --accent-color: #{$white};
+    --loading-line-color: #{$white};
+    --loading-out-color: #{$gray-600};
+  }
+
+  &[data-theme='light'] {
+    --background-color: #{$white};
+    --default-app-background: #{$white};
+    --border-color: #{$gray-300};
+    --text-color: #{$gray-900};
+    --accent-color: #{$primary};
+    --loading-line-color: #{$primary};
+    --loading-out-color: #{$gray-300};
+  }
+
+  &[data-theme='dark'] {
+    --background-color: #{$gray-800};
+    --default-app-background: #{$gray-800};
+    --border-color: #{$gray-600};
+    --text-color: #{$white};
+    --accent-color: #{$white};
+    --loading-line-color: #{$white};
+    --loading-out-color: #{$gray-600};
+  }
+}
+
+html, body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+}

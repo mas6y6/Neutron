@@ -16,6 +16,7 @@ import {Database} from "./database/Database";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import {User} from "./database/entities/User";
+import {handleCSRF, handleErrors} from "./utils";
 
 export class NeutronServer {
     public version = "1.0.0";
@@ -34,10 +35,10 @@ export class NeutronServer {
     public serverTitle: string = "Neutron";
     public superadminKey: string = "";
 
-    private ACCESS_TOKEN_SECRET: string = crypto.randomBytes(32).toString("hex");
-    private ACCESS_TOKEN_EXPIRATION_TIME: string = "15m";
-    private REFRESH_TOKEN_SECRET: string = crypto.randomBytes(32).toString("hex");
-    private REFRESH_TOKEN_EXPIRATION_TIME: string = "7d";
+    public ACCESS_TOKEN_SECRET: string = crypto.randomBytes(32).toString("hex");
+    public ACCESS_TOKEN_EXPIRATION_TIME: string = "15m";
+    public REFRESH_TOKEN_SECRET: string = crypto.randomBytes(32).toString("hex");
+    public REFRESH_TOKEN_EXPIRATION_TIME: string = "7d";
 
     public static getInstance(): NeutronServer {
         if (!NeutronServer.instance) {
@@ -139,7 +140,7 @@ export class NeutronServer {
             this.server = http.createServer(this.app);
         }
 
-        // 1. Security first
+// 1. Security first
         this.app.use(helmet({
             contentSecurityPolicy: {
                 directives: {
@@ -166,20 +167,15 @@ export class NeutronServer {
 // 3. Cookie & CSRF
         this.app.use(cookieParser());
         this.app.use(csurf({ cookie: true }));
-        this.app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-            if (err.code !== 'EBADCSRFTOKEN') return next(err);
-            res.status(403).send({ detail: "Invalid CSRF token" });
-        });
 
 // 4. Static files
-        const proxyPath = this.config.proxy_base_path;
-        const staticRouter = express.Router();
-        staticRouter.use('/public', express.static(path.join(__dirname, '../client/public')));
-        staticRouter.use('/assets', express.static(path.join(__dirname, '../client/assets')));
-        this.app.use(proxyPath, staticRouter);
+        this.app.use("/public", express.static(path.join(__dirname, "../client/public")));
+        this.app.use("/assets", express.static(path.join(__dirname, "../client/assets")));
 
 // 5. Custom routes
-        this.app.use(proxyPath, require("./routes/main"));
+        require("./routes/main");
+        require("./routes/superadmin");
+        require("./routes/account");
 
 // 6. WebSocket upgrade handling
         this.server.on('upgrade', (request: IncomingMessage, socket: Socket, head: Buffer) => {
@@ -192,13 +188,11 @@ export class NeutronServer {
             this.wss.handleUpgrade(request, socket, head, (ws) => handler(ws, request));
         });
 
-// 7. 404 error
-        const basePath = proxyPath.replace(/\/+$/, ""); // remove trailing slash
-        this.app.use(`${basePath}/*splat`, async (req, res) => {
-            res.status(404).send({
-                detail: "Not Found",
-            });
-        });
+// 7. CSRF errors
+        handleCSRF(this.app);
+
+// 8. 404 + 500 errors
+        handleErrors(this.app);
 
         if (await Database.getDataSource().getRepository(User).count() === 0) {
             this.firstStart = true;

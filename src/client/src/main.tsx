@@ -1,7 +1,8 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App'
+import App, {backgroundRef} from './App'
+import {BackgroundComponent} from "./UI";
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-    <App />
+    <><BackgroundComponent ref={backgroundRef}/><App/></>
 )

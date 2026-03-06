@@ -1,0 +1,114 @@
+// UI components from UI.css
+.LoadingCircle {
+  border: 5px solid var(--loading-out-color);
+  border-top: 5px solid var(--loading-line-color);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  margin: 20px;
+  animation: spin 0.8s linear infinite
+}
+
+@keyframes spin {
+  0% { transform: rotate(0) }
+  100% { transform: rotate(360deg) }
+}
+
+.UIEntry {
+  outline: none;
+  border: 1px solid var(--border-color);
+  border-radius: $border-radius-lg;
+  padding: $spacer * 0.5 $spacer;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.UIEntry:focus-visible {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px var(--accent-color);
+}
+
+.UIButton {
+  outline: none;
+  border: 1px solid var(--border-color);
+  border-radius: $border-radius-lg;
+  padding: ($spacer * 0.5) ($spacer * 1.25);
+  color: var(--text-color);
+  background-color: var(--background-color);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  font-weight: $font-weight-medium;
+}
+
+.UIButton:hover {
+  background-color: var(--border-color);
+}
+
+.UIButton:active {
+  opacity: 0.8;
+}
+
+.UISwitch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.UISwitch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.UISwitchSlider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--loading-out-color);
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.UISwitchSlider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: $white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+.UISwitch input:checked + .UISwitchSlider {
+  background-color: var(--accent-color);
+}
+
+.UISwitch input:checked + .UISwitchSlider:before {
+  transform: translateX(26px);
+}
+
+.UISwitch.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.AppBackground {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  background-color: var(--default-background-color);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: all 0.3s ease;
+}

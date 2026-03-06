@@ -30,9 +30,6 @@ export class NeutronConfig {
     // database options
     public database_type: string = "sqlite";
 
-    // proxy options
-    public proxy_base_path: string = "/";
-
     // access token options
     public access_token_expiration: string = "15m";
     public refresh_token_expiration: string = "7d";
@@ -77,10 +74,6 @@ export class NeutronConfig {
         this.rate_limit_max = getPath<number>("server.rate_limit.max", this.rate_limit_max);
 
         this.database_type = getPath<string>("database.type", this.database_type);
-
-        this.proxy_base_path = getPath<string>("server.proxy_base_path", this.proxy_base_path);
-        if (!this.proxy_base_path.startsWith("/")) this.proxy_base_path = "/" + this.proxy_base_path;
-        if (!this.proxy_base_path.endsWith("/")) this.proxy_base_path = this.proxy_base_path + "/";
 
         this.access_token_expiration = getPath<string>("server.access_token.expiration", this.access_token_expiration);
         this.refresh_token_expiration = getPath<string>("server.refresh_token.expiration", this.refresh_token_expiration);

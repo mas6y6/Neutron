@@ -8,7 +8,6 @@ import React, {
     useRef,
     useEffect
 } from "react"
-import './css/UI.css'
 
 export interface ModalContainerHandle {
     set: (modal: JSX.Element | null) => void;
@@ -229,4 +228,52 @@ export const NotificationContainer = forwardRef<NotificationHandle>((props, ref)
             ))}
         </div>
     );
+});
+
+
+
+interface BackgroundOptions {
+    color?: string;
+    imageUrl?: string;
+    blur?: boolean;
+}
+
+export interface BackgroundHandle {
+    setBackground: (options: BackgroundOptions) => void;
+}
+
+
+interface BackgroundProps {
+    color?: string;
+    image?: string;
+    blur?: boolean;
+}
+
+export const BackgroundComponent = forwardRef((props: BackgroundProps, ref) => {
+    const [bgProps, setBgProps] = useState<BackgroundProps>({
+        color: undefined, // undefined = default Bootstrap background
+        image: undefined,
+        blur: false,
+    });
+
+    // Expose a method via ref
+    useImperativeHandle(ref, () => ({
+        setBackground: (newProps: BackgroundProps) => setBgProps(newProps),
+    }));
+
+    const style: React.CSSProperties = {
+        backgroundColor: bgProps.color ?? 'var(--default-app-background)', // <-- Bootstrap default
+        backgroundImage: bgProps.image ? `url(${bgProps.image})` : undefined,
+        backdropFilter: bgProps.blur ? 'blur(8px)' : undefined,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: -1,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+    };
+
+    return <div className="background-component" style={style}></div>;
 });

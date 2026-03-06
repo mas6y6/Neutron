@@ -1,54 +1,26 @@
-import React, {useRef, useEffect, RefObject, createRef} from "react";
+import React, {useEffect, createRef} from "react";
 import {
+    BackgroundComponent,
+    BackgroundHandle,
     Modal,
     ModalContainer,
     ModalContainerHandle,
-    ModalHandle,
-    LoadingModal,
     NotificationContainer,
     NotificationHandle
 } from "./UI";
-import {SetupInit} from "./modals/setup";
-import "./css/Font.css";
-import "./css/App.css";
-import {animationCooldown, fetchWithCsrf, sleep} from "./utils";
+import './sass/main.scss';
+import {MainApplication} from "./MainApplication";
 
 export const notificationRef = createRef<NotificationHandle>();
 export const containerRef = createRef<ModalContainerHandle>();
+export const backgroundRef = createRef<BackgroundHandle>();
 
 function App() {
-    const modalRef = useRef<ModalHandle>(null);
-
     useEffect(() => {
-        async function main() {
-            containerRef.current?.set(
-                <LoadingModal />
-            );
-
-            let server_status = await (await fetchWithCsrf("/api/status")).json();
-            if (!(server_status.ssl_enabled)) {
-                notificationRef.current?.add(
-                    {
-                        title: "Warning",
-                        content: "This server is not using SSL. This is not recommended for production.",
-                        type: "warning"
-                    }
-                )
-            }
-
-            await animationCooldown();
-            if (server_status.firstStart == true) {
-                containerRef.current?.set(<SetupInit />);
-            } else {
-
-            }
-            modalRef.current?.showModal();
-        }
-
-        main().catch((e) => {
+        MainApplication().catch((e) => {
             console.error(e);
             containerRef.current?.set(
-                <Modal ref={modalRef}>
+                <Modal>
                     <h1>Error</h1>
                     <p>An error occurred while loading Neutron.</p>
                     <p>Please reload to try again.</p>
@@ -59,8 +31,8 @@ function App() {
 
     return (
         <div className="App">
-            <ModalContainer ref={containerRef} />
-            <NotificationContainer ref={notificationRef} />
+            <ModalContainer ref={containerRef}/>
+            <NotificationContainer ref={notificationRef}/>
         </div>
     );
 }
