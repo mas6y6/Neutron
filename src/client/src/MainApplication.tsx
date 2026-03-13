@@ -1,4 +1,4 @@
-import {animationCooldown, fetchWithCsrf, loadVaultKey} from "./utils";
+import {animationCooldown, fetchWithCsrf, loadVaultKey, logout} from "./utils";
 import {SuperAdminSetupInit} from "./modals/setup";
 import React from "react";
 import {modalContainerRef, notificationRef, ZariumRef, setSuperadminStatus} from "./App";
@@ -72,13 +72,18 @@ export async function renderApplication() {
 
     if (VaultSession.getKey() == null) {
         if (loadVaultKey() == null) {
-            await fetchWithCsrf("/api/auth/logout", {
-                method: "POST"
-            })
             console.log("Vault key not found, redirecting to login.");
-            modalContainerRef.current?.set(<LoginInit motd={server_status.motd} version={server_status.version}/>);
+            await logout();
             return;
         }
+    }
+
+    try {
+        await VaultSession.obtainVault();
+    } catch (e) {
+        console.error("Failed to obtain vault:", e);
+        await logout();
+        return;
     }
 
     ZariumRef.current?.show();

@@ -88,7 +88,7 @@ export async function obtainVaultKey(password: string, data: any): Promise<Uint8
     return key;
 }
 
-function base64ToUint8Array(base64: string): Uint8Array {
+export function base64ToUint8Array(base64: string): Uint8Array {
     if (!base64) return new Uint8Array(0);
     const binary = atob(base64);
     const len = binary.length;
@@ -113,6 +113,15 @@ export function loadVaultKey(): Uint8Array | null {
     const bytes = new Uint8Array(atob(base64).split("").map(c => c.charCodeAt(0)));
     VaultSession.setKey(bytes);
     return bytes;
+}
+
+export function uint8ArrayToBase64(bytes: Uint8Array): string {
+    let binary = '';
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
 }
 
 export async function logout() {

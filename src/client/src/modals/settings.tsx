@@ -233,13 +233,22 @@ function ProfileSettings({ userData, onBack }: { userData: any, onBack: () => vo
 function SecuritySettings({ onBack }: { onBack: () => void }) {
     const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
+    const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
     const [saving, setSaving] = useState(false);
 
     const handleChangePassword = async () => {
-        if (!oldPassword || !newPassword) {
+        if (!oldPassword || !newPassword || !newPasswordConfirm) {
             notificationRef.current?.add({
                 title: "Error",
                 content: "Please fill in both password fields",
+                type: "error"
+            });
+            return;
+        }
+        if (newPassword !== newPasswordConfirm) {
+            notificationRef.current?.add({
+                title: "Error",
+                content: "Passwords do not match",
                 type: "error"
             });
             return;
@@ -259,6 +268,7 @@ function SecuritySettings({ onBack }: { onBack: () => void }) {
                 });
                 setOldPassword("");
                 setNewPassword("");
+                setNewPasswordConfirm("");
             } else {
                 notificationRef.current?.add({
                     title: "Error",
@@ -297,6 +307,12 @@ function SecuritySettings({ onBack }: { onBack: () => void }) {
                     placeholder="New Password" 
                     value={newPassword} 
                     onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <Entry
+                    type="password"
+                    placeholder="Re-Enter Password"
+                    value={newPassword}
+                    onChange={(e) => setNewPasswordConfirm(e.target.value)}
                 />
                 <Button onClick={handleChangePassword} disabled={saving} style={{ marginTop: '10px' }}>
                     Update Password

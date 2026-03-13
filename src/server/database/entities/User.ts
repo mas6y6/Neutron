@@ -1,20 +1,14 @@
-import {
-    Entity,
-    Column,
-    PrimaryGeneratedColumn,
-    OneToOne,
-    OneToMany
-} from "typeorm";
+import {Column, Entity, OneToMany, OneToOne, PrimaryGeneratedColumn} from "typeorm";
 
-import { Encryption } from "../../Encryption";
-import { v4 as uuidv4 } from "uuid";
+import {Encryption} from "../../Encryption";
+import {v4 as uuidv4} from "uuid";
 
-import { ZariumServer } from "../../ZariumServer";
-import { parseTime } from "../../utils";
+import {ZariumServer} from "../../ZariumServer";
+import {parseTime} from "../../utils";
 
-import { UserAvatar } from "./UserAvatar";
-import { UserSession } from "./UserSessions";
-import { UserVault } from "./UserVault";
+import {UserAvatar} from "./UserAvatar";
+import {UserSession} from "./UserSessions";
+import {UserVault} from "./UserVault";
 
 @Entity("users")
 export class User {
@@ -89,15 +83,17 @@ export class User {
         });
 
         const vaultRepo = ZariumServer.getInstance().database.dataSource.getRepository(UserVault);
-        const vault = vaultRepo.create({
+        const encryptedVault = Encryption.encrypt(Buffer.from(JSON.stringify({})), vaultKey);
+
+        user.vault = vaultRepo.create({
             id: user.id,
             encryptedVaultKey: wrapped.encrypted.toString("base64"),
             vaultKeyIv: wrapped.iv.toString("base64"),
             vaultKeyTag: wrapped.tag.toString("base64"),
-            vault: "" // empty vault for new user
+            vault: encryptedVault.encrypted.toString("base64"),
+            iv: encryptedVault.iv.toString("base64"),
+            tag: encryptedVault.tag.toString("base64")
         });
-
-        user.vault = vault;
 
         await repo.save(user);
 

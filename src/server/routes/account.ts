@@ -397,3 +397,31 @@ safeRoute(server.app, '/api/auth/get_vault', 'post', async (req: SafeRequest, re
     middleware: [server.authLimiter],
     require_auth: true
 });
+
+safeRoute(server.app, '/api/auth/update_vault', 'post', async (req: SafeRequest, res) => {
+    if (!requireJson(req, res)) return;
+    if (!req.user) return res.status(401).json({ detail: "Unauthorized" });
+
+    const { vault, vaultIv, vaultTag } = req.body;
+    if (!vault || !vaultIv || !vaultTag) {
+        return res.status(400).json({ detail: "Missing vault data" });
+    }
+
+    const vaultRepo = ZariumServer.getInstance().database.dataSource.getRepository(UserVault);
+    let userVault = await vaultRepo.findOne({ where: { id: req.user.userId } });
+
+    if (!userVault) {
+        userVault = vaultRepo.create({ id: req.user.userId });
+    }
+
+    userVault.vault = vault;
+    userVault.iv = vaultIv;
+    userVault.tag = vaultTag;
+
+    await vaultRepo.save(userVault);
+
+    res.send({ detail: "Vault updated" });
+}, {
+    middleware: [server.authLimiter],
+    require_auth: true
+});
