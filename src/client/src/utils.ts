@@ -76,12 +76,12 @@ export async function obtainVaultKey(password: string, data: any): Promise<Uint8
     const key = new Uint8Array(decrypted);
     VaultSession.setKey(key);
 
-    const serverres = await (await fetchWithCsrf("/api/status", {
+    const server_res = await (await fetchWithCsrf("/api/status", {
         method: "GET",
         headers: { "Content-Type": "application/json" }
     })).json();
 
-    if (serverres.require_password_on_reload == false) {
+    if (server_res.require_password_on_reload == false) {
         saveVaultKey(key);
     }
 
@@ -140,4 +140,68 @@ export async function logout() {
         await animationCooldown();
         window.location.reload();
     }
+}
+
+/**
+ * Encrypt data using an RSA public key (PEM format) and RSA-OAEP.
+ */
+export async function encryptWithPublicKey(publicKeyPem: string, data: Uint8Array): Promise<Uint8Array> {
+    const pemContents = publicKeyPem
+        .replace("-----BEGIN PUBLIC KEY-----", "")
+        .replace("-----END PUBLIC KEY-----", "")
+        .replace(/\s/g, "");
+    const binaryKey = base64ToUint8Array(pemContents);
+
+    const publicKey = await crypto.subtle.importKey(
+        "spki",
+        new Uint8Array(binaryKey),
+        {
+            name: "RSA-OAEP",
+            hash: "SHA-256",
+        },
+        true,
+        ["encrypt"]
+    );
+
+    const encrypted = await crypto.subtle.encrypt(
+        {
+            name: "RSA-OAEP",
+        },
+        publicKey,
+        new Uint8Array(data)
+    );
+
+    return new Uint8Array(encrypted);
+}
+
+/**
+ * Decrypt data using an RSA private key (PEM format) and RSA-OAEP.
+ */
+export async function decryptWithPrivateKey(privateKeyPem: string, encryptedData: Uint8Array): Promise<Uint8Array> {
+    const pemContents = privateKeyPem
+        .replace(/-----BEGIN (RSA )?PRIVATE KEY-----/, "")
+        .replace(/-----END (RSA )?PRIVATE KEY-----/, "")
+        .replace(/\s/g, "");
+    const binaryKey = base64ToUint8Array(pemContents);
+
+    const privateKey = await crypto.subtle.importKey(
+        "pkcs8",
+        new Uint8Array(binaryKey),
+        {
+            name: "RSA-OAEP",
+            hash: "SHA-256",
+        },
+        true,
+        ["decrypt"]
+    );
+
+    const decrypted = await crypto.subtle.decrypt(
+        {
+            name: "RSA-OAEP",
+        },
+        privateKey,
+        new Uint8Array(encryptedData)
+    );
+
+    return new Uint8Array(decrypted);
 }

@@ -107,7 +107,8 @@ safeRoute(server.app, '/api/setup/create-superadmin', 'post', async (req,res) =>
             vaultSalt: user.vaultSalt,
             encryptedVaultKey: user.vault?.encryptedVaultKey,
             vaultKeyIv: user.vault?.vaultKeyIv,
-            vaultKeyTag: user.vault?.vaultKeyTag
+            vaultKeyTag: user.vault?.vaultKeyTag,
+            publicKey: user.publicKey
         })
     }
 }, {

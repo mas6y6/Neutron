@@ -36,6 +36,16 @@
   cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease;
   font-weight: $font-weight-medium;
+
+  &.btn-secondary {
+    background-color: var(--secondary-button-bg);
+    color: var(--secondary-button-text);
+    border: 1px solid var(--border-color);
+
+    &:hover {
+      background-color: var(--secondary-button-hover-bg);
+    }
+  }
 }
 
 .UIButton:active {

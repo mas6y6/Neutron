@@ -7,6 +7,8 @@ import {LoginInit} from "./modals/login";
 import {Accountbar, Groups} from "./Zarium";
 import VaultSession from "./VaultSession";
 
+export let ws: WebSocket | null = null;
+
 export async function MainApplication() {
     modalContainerRef.current?.set(
         <LoadingModal />
@@ -89,4 +91,27 @@ export async function renderApplication() {
     ZariumRef.current?.show();
     ZariumRef.current?.getSidebarContent()?.setGroups(<Groups/>);
     ZariumRef.current?.getSidebarContent()?.setAccountbar(<Accountbar id={res.id} username={res.username} displayname={res.displayname}/>);
+
+    openWebsocket();
+}
+
+function openWebsocket() {
+    const protocol = location.protocol === "https:" ? "wss" : "ws";
+    ws! = new WebSocket(`${protocol}://${location.host}/api/session_ws`);
+
+    ws!.onmessage = async (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === "vault_update") {
+            try {
+                await VaultSession.obtainVault();
+                notificationRef.current?.add({
+                    title: "Vault Updated",
+                    content: "Your vault has been updated from another session.",
+                    type: "info"
+                });
+            } catch (e) {
+                console.error("Failed to sync vault:", e);
+            }
+        }
+    }
 }

@@ -93,8 +93,8 @@ export const Sidebar = React.forwardRef<SidebarHandle, SidebarProps>((props, ref
 });
 
 export interface MainContentHandle {
-    set: (content: JSX.Element | null) => void;
-    get: () => JSX.Element | null;
+    openTab: (name: string, content: JSX.Element) => string;
+    closeTab: (id: number | string) => void;
 }
 
 export interface MainContentProps {
@@ -103,16 +103,81 @@ export interface MainContentProps {
 }
 
 export const MainContent = React.forwardRef<MainContentHandle, MainContentProps>((props, ref) => {
-    const [content, setContent] = React.useState<JSX.Element | null>(null);
+    const [tabs, setTabs] = React.useState<{id: string, name: string, content: JSX.Element}[]>([]);
+    const [activeTab, setActiveTab] = React.useState<number>(-1);
+
+    const closeTab = (id: number | string) => {
+        setTabs(prev => {
+            let index = -1;
+            if (typeof id === 'number') {
+                index = id;
+            } else {
+                index = prev.findIndex(t => t.id === id);
+            }
+
+            if (index === -1 || index >= prev.length) return prev;
+
+            const newTabs = prev.filter((_, i) => i !== index);
+            if (activeTab === index) {
+                setActiveTab(newTabs.length > 0 ? Math.max(0, index - 1) : -1);
+            } else if (activeTab > index) {
+                setActiveTab(activeTab - 1);
+            }
+            return newTabs;
+        });
+    };
 
     useImperativeHandle(ref, () => ({
-        set: (newContent: JSX.Element | null) => setContent(newContent),
-        get: () => content
+        openTab: (name: string, content: JSX.Element) => {
+            const id = crypto.randomUUID();
+            setTabs(prev => {
+                const existingIndex = prev.findIndex(t => t.name === name);
+                if (existingIndex !== -1) {
+                    const newTabs = [...prev];
+                    newTabs[existingIndex] = {id: newTabs[existingIndex].id, name, content};
+                    setActiveTab(existingIndex);
+                    return newTabs;
+                }
+                const newTabs = [...prev, {id, name, content}];
+                setActiveTab(newTabs.length - 1);
+                return newTabs;
+            });
+            return id;
+        },
+        closeTab: (id: number | string) => closeTab(id)
     }))
 
     return (
         <div className={`MainContent ${props.className ?? ''}`} onClick={props.onClick}>
-            { content }
+            {tabs.length > 0 && (
+                <div className="MainContentTabs">
+                    <div
+                        className={`MainContentTab ${activeTab === -1 ? 'active' : ''}`}
+                        onClick={() => setActiveTab(-1)}
+                    >
+                        Main
+                    </div>
+                    {tabs.map((tab, index) => (
+                        <div
+                            key={tab.id}
+                            className={`MainContentTab ${activeTab === index ? 'active' : ''}`}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveTab(index);
+                            }}
+                        >
+                            {tab.name}
+                            <span className="MainContentTabClose" onClick={(e) => {
+                                e.stopPropagation();
+                                closeTab(index);
+                            }}>×</span>
+                        </div>
+                    ))}
+                </div>
+            )}
+            <div className="MainContentBody">
+                { activeTab === -1 ? <ZariumDefaultMainContent /> : tabs[activeTab].content }
+            </div>
         </div>
     )
 });
@@ -148,5 +213,14 @@ export function Accountbar(props: AccountbarProps) {
 export function Groups() {
     return (
         <div className="Groups"></div>
+    )
+}
+
+export function ZariumDefaultMainContent() {
+    return (
+        <>
+            <h1>Welcome to Zarium</h1>
+            <p>lol</p>
+        </>
     )
 }

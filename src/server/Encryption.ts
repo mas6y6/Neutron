@@ -69,4 +69,21 @@ export class Encryption {
     public static async hashPassword(password: string): Promise<string> {
         return argon2.hash(password);
     }
+
+    /**
+     * Generate an RSA-4096 public and private key pair.
+     */
+    public static generateKeyPair() {
+        return crypto.generateKeyPairSync("rsa", {
+            modulusLength: 4096,
+            publicKeyEncoding: {
+                type: "spki",
+                format: "pem",
+            },
+            privateKeyEncoding: {
+                type: "pkcs8",
+                format: "pem",
+            },
+        });
+    }
 }

@@ -2,6 +2,7 @@ import {RawData, WebSocket} from "ws";
 import jwt from "jsonwebtoken";
 import express, {Application, ErrorRequestHandler, RequestHandler, Router} from "express";
 import {ZariumServer} from "./ZariumServer";
+import {IncomingMessage} from "node:http";
 
 export function waitForMessage(ws: WebSocket): Promise<string> {
     return new Promise((resolve) => {
@@ -56,6 +57,56 @@ export interface UserJwtPayload {
 
 export interface SafeRequest extends express.Request {
     user?: UserJwtPayload | null;
+}
+
+export interface SafeWsRequest extends IncomingMessage {
+    user?: UserJwtPayload | null;
+}
+
+export type WsHandler = (ws: WebSocket, req: SafeWsRequest) => void;
+
+export function safeWsRoute(
+    server: ZariumServer,
+    path: string,
+    handler: WsHandler,
+    options: { require_auth?: boolean } = { require_auth: false }
+) {
+    const wrappedHandler: WsHandler = (ws, req) => {
+        if (options.require_auth) {
+            let token: string | undefined;
+
+            // 1. Authorization header (less common for standard WebSockets but good to have)
+            const authHeader = req.headers.authorization;
+            if (authHeader?.startsWith("Bearer ")) {
+                token = authHeader.split(" ")[1];
+            }
+
+            // 2. Cookies (Standard for browser-based WebSockets)
+            if (!token) {
+                const cookieHeader = req.headers.cookie;
+                if (cookieHeader) {
+                    const cookies = Object.fromEntries(cookieHeader.split(';').map(c => c.trim().split('=')));
+                    token = cookies["access-token"];
+                }
+            }
+
+            if (!token) {
+                ws.close(4001, "Unauthorized: Missing access token");
+                return;
+            }
+
+            try {
+                req.user = jwt.verify(token, ZariumServer.getInstance().ACCESS_TOKEN_SECRET) as UserJwtPayload;
+            } catch {
+                ws.close(4001, "Unauthorized: Invalid or expired token");
+                return;
+            }
+        }
+
+        handler(ws, req);
+    };
+
+    server.registerWsRoute(path, wrappedHandler as any);
 }
 
 export function safeRoute(

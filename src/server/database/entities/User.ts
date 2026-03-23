@@ -9,10 +9,10 @@ import {parseTime} from "../../utils";
 import {UserAvatar} from "./UserAvatar";
 import {UserSession} from "./UserSessions";
 import {UserVault} from "./UserVault";
+import {UserStore} from "./UserStore";
 
 @Entity("users")
 export class User {
-
     @PrimaryGeneratedColumn("uuid")
     id!: string;
 
@@ -37,6 +37,9 @@ export class User {
     @Column({ nullable: true })
     vaultSalt?: string;
 
+    @Column({ default: "" })
+    publicKey!: string;
+
     @Column({ default: false })
     setup!: boolean;
 
@@ -47,7 +50,10 @@ export class User {
     vault!: UserVault;
 
     @OneToMany(() => UserSession, session => session.user)
-    sessions!: UserSession;
+    sessions!: UserSession[];
+
+    @OneToMany(() => UserStore, store => store.user)
+    stores!: UserStore[];
 
     /* ----------------------------- Utilities ----------------------------- */
 
@@ -70,6 +76,8 @@ export class User {
 
         const vaultKey = Encryption.randomBytes(32);
 
+        const keys = Encryption.generateKeyPair();
+
         const wrapped = Encryption.encrypt(vaultKey, passwordKey);
 
         const user = repo.create({
@@ -79,11 +87,14 @@ export class User {
             perms,
             passwordHash,
             vaultSalt: vaultSalt.toString("base64"),
+            publicKey: keys.publicKey,
             setup
         });
 
         const vaultRepo = ZariumServer.getInstance().database.dataSource.getRepository(UserVault);
-        const encryptedVault = Encryption.encrypt(Buffer.from(JSON.stringify({})), vaultKey);
+        const encryptedVault = Encryption.encrypt(Buffer.from(JSON.stringify({
+            privateKey: keys.privateKey
+        })), vaultKey);
 
         user.vault = vaultRepo.create({
             id: user.id,

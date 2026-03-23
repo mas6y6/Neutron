@@ -1,11 +1,17 @@
 import {ZariumServer} from "../ZariumServer";
 import {renderTemplate} from "../Renderer";
-import {SafeRequest, safeRoute} from "../utils";
+import {SafeRequest, safeRoute, safeWsRoute} from "../utils";
 const server:ZariumServer = ZariumServer.getInstance();
 
 safeRoute(server.app, '/', 'get', async (req: SafeRequest,res) => {
     res.send(await renderTemplate("index.html", { csrfToken: (req as any).csrfToken() }))
 });
+
+safeWsRoute(server, '/ws/echo', (ws, req) => {
+    ws.on('message', (msg) => {
+        ws.send(`Echo: ${msg} (User: ${req.user?.userId || 'Anonymous'})`);
+    });
+}, { require_auth: true });
 
 safeRoute(server.app, '/api/status', 'get', async (req: SafeRequest,res) => {
     res.send({

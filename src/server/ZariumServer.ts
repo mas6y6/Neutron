@@ -18,6 +18,7 @@ import rateLimit from "express-rate-limit";
 import {User} from "./database/entities/User";
 import {handleCSRF, handleErrors} from "./utils";
 import cryptoModule from "crypto";
+import {ZariumClient} from "./ZariumClient";
 
 export class ZariumServer {
     public version = "1.0.0";
@@ -34,14 +35,15 @@ export class ZariumServer {
     public wsRouteHandlers: { [url: string]: (ws: WebSocket, req: IncomingMessage) => void } = {};
     public motd: string = "A Zarium Server";
     public superadminKey: string = "";
+    public clients: Map<string,Array<ZariumClient>> = new Map(); // userid -> clients
 
     public ACCESS_TOKEN_SECRET: string = Encryption.randomBytes(32).toString("hex");
     public ACCESS_TOKEN_EXPIRATION_TIME: string = "10m";
     public REFRESH_TOKEN_EXPIRATION_TIME: string = "7d";
 
     public authLimiter = rateLimit({
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 20, // limit each IP to 20 requests per windowMs for auth routes
+        windowMs: 15 * 60 * 1000,
+        max: 20,
         message: { detail: "Too many authentication attempts, please try again later." },
         standardHeaders: true,
         legacyHeaders: false,
@@ -263,5 +265,51 @@ Your Zarium server is running without SSL. This means:
         handler: (ws: WebSocket, req: IncomingMessage) => void
     ) {
         this.wsRouteHandlers[url] = handler;
+    }
+
+    public getUserClients(userId: string): ZariumClient[] | undefined {
+        return this.clients.get(userId);
+    }
+
+    public getAllConnectedClients(): ZariumClient[] {
+        return Array.from(this.clients.values()).flat();
+    }
+
+    public broadcastExcept(sender: ZariumClient, message: any) {
+        const msg = JSON.stringify(message);
+        for (const clients of this.clients.values()) {
+            for (const client of clients) {
+                if (client !== sender) {
+                    client.ws.send(msg);
+                }
+            }
+        }
+    }
+
+    public broadcastSameUserExcept(userid: string, sender: ZariumClient, message: any) {
+        const msg = JSON.stringify(message);
+        this.clients.get(userid)?.forEach(client => {
+            if (client !== sender) {
+                client.ws.send(msg);
+            }
+        });
+    }
+
+    public broadcastSameUser(userid: string, message: any) {
+        const msg = JSON.stringify(message);
+        this.clients.get(userid)?.forEach(client => {
+            client.ws.send(msg);
+        });
+    }
+
+    public getZariumClientBySession(id: string): ZariumClient | undefined {
+        for (const clients of this.clients.values()) {
+            for (const client of clients) {
+                if (client.sessionId === id) {
+                    return client;
+                }
+            }
+        }
+        return undefined;
     }
 }

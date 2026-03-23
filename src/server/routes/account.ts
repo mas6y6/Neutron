@@ -1,5 +1,5 @@
 import {ZariumServer} from "../ZariumServer";
-import {parseTime, requireJson, SafeRequest, safeRoute} from "../utils";
+import {parseTime, requireJson, SafeRequest, safeRoute, safeWsRoute} from "../utils";
 import {User} from "../database/entities/User";
 import {UserAvatar} from "../database/entities/UserAvatar";
 import {UserSession} from "../database/entities/UserSessions";
@@ -9,6 +9,8 @@ import { Encryption } from "../Encryption";
 import fs from "fs/promises";
 import path from "path";
 import {UserVault} from "../database/entities/UserVault";
+import {ZariumClient} from "../ZariumClient";
+import {UserStore} from "../database/entities/UserStore";
 
 const server:ZariumServer = ZariumServer.getInstance();
 
@@ -93,6 +95,7 @@ safeRoute(server.app, '/api/auth/password_auth', 'post', async (req: SafeRequest
         vaultKeyIv: user.vault?.vaultKeyIv,
         vaultKeyTag: user.vault?.vaultKeyTag,
         vaultSalt: user.vaultSalt,
+        publicKey: user.publicKey,
     });
 }, {
     middleware: [server.authLimiter]
@@ -420,8 +423,161 @@ safeRoute(server.app, '/api/auth/update_vault', 'post', async (req: SafeRequest,
 
     await vaultRepo.save(userVault);
 
+    server.broadcastSameUserExcept(req.user.userId, server.getZariumClientBySession(req.user.sessionId)!, {
+        "type": "vault_update",
+        "vault": vault,
+        "vaultIv": vaultIv,
+        "vaultTag": vaultTag,
+    })
+
     res.send({ detail: "Vault updated" });
 }, {
     middleware: [server.authLimiter],
+    require_auth: true
+});
+
+safeRoute(server.app, '/api/users/online', 'get', async (req: SafeRequest, res) => {
+    const onlineUserIds = Array.from(server.clients.keys()).filter(
+        userId => server.clients.get(userId) && server.clients.get(userId)!.length > 0
+    );
+
+    res.send({
+        onlineUsers: onlineUserIds
+    });
+}, {
+    require_auth: true
+});
+
+safeRoute(server.app, '/api/users/get_user_data', 'get', async (req: SafeRequest, res) => {
+    if (!requireJson(req, res)) return;
+
+    if (!req.body.userId) {
+        return res.status(400).json({ detail: "Missing user id" });
+    }
+
+    res.send({
+
+    })
+}, {
+    require_auth: true
+})
+
+safeWsRoute(server, '/api/session_ws', (ws, req) => {
+    const client = new ZariumClient(ws, req);
+    const userId = <string>req.user?.userId;
+
+    if (!server.clients.get(userId)) {
+        server.clients.set(userId, []);
+    }
+
+    server.clients.get(userId)?.push(client);
+
+    server.broadcastExcept(client, {
+        "type": "user_status",
+        "userid": userId,
+        "online": true,
+    })
+
+    ws.on("close", () => {
+        const clients = server.clients.get(userId);
+        if (!clients) return;
+
+        server.clients.set(
+            userId,
+            clients.filter(c => c !== client)
+        );
+
+        if (server.clients.get(userId)?.length === 0) {
+            server.clients.delete(userId);
+
+            server.broadcastExcept(client, {
+                "type": "user_status",
+                "userid": userId,
+                "online": false,
+            })
+        }
+    });
+}, {
+    require_auth: true
+});
+
+safeRoute(server.app, '/api/store/submit_store', 'post', async (req: SafeRequest, res) => {
+    const body: { type: string; data: string; toUserId: string; } = req.body;
+    if (!body.type || !body.data) {
+        return res.status(400).json({ detail: "Missing required fields" });
+    }
+
+    const userRepo = ZariumServer.getInstance().database.dataSource.getRepository(User);
+    const user = await userRepo.findOne({where: {id: req.user?.userId}});
+    const userStoreRepo = ZariumServer.getInstance().database.dataSource.getRepository(UserStore);
+
+    if (!user) {
+        return res.status(404).json({ detail: "User not found" });
+    }
+
+    const store = userStoreRepo.create({
+        type: body.type,
+        encryptedData: body.data,
+        userId: body.toUserId,
+        sourceUserId: user.id
+    });
+
+    server.broadcastSameUser(body.toUserId, {
+        "type": "store_update",
+        "store": store
+    })
+
+    await userStoreRepo.save(store);
+
+    res.send({ id: store.id });
+}, {
+    require_auth: true
+})
+
+safeRoute(server.app, '/api/store/get_store', 'post', async (req: SafeRequest, res) => {
+    const userRepo = ZariumServer.getInstance().database.dataSource.getRepository(User);
+    const user = await userRepo.findOne({
+        where: {id: req.user?.userId},
+        relations: ['stores']
+    });
+
+    let stores: Record<string, { id: string; sourceUserId: string; data: string }[]> = {};
+
+    user?.stores?.forEach(store => {
+        if (!stores[store.type]) {
+            stores[store.type] = [];
+        }
+        stores[store.type].push({
+            "id": store.id,
+            "sourceUserId": store.sourceUserId,
+            "data": store.encryptedData
+        })
+    })
+
+    res.send(stores)
+}, {
+    require_auth: true
+});
+
+safeRoute(server.app, '/api/store/clear_store', 'post', async (req: SafeRequest, res) => {
+    const userRepo = ZariumServer.getInstance().database.dataSource.getRepository(User);
+    const user = await userRepo.findOne({
+        where: {id: req.user?.userId},
+        relations: ['stores']
+    });
+
+    if (!user) {
+        return res.status(404).json({detail: "User not found"});
+    }
+    
+    if (user.stores && user.stores.length > 0) {
+        const storeRepo = ZariumServer.getInstance().database.dataSource.getRepository(UserStore);
+        await storeRepo.remove(user.stores);
+    }
+
+    res.send({
+        "detail": "Cleared store"
+    })
+}, {
     require_auth: true
 });

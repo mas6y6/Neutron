@@ -6,8 +6,9 @@ import {UserSession} from "./entities/UserSessions";
 import path from "node:path";
 import {UserAvatar} from "./entities/UserAvatar";
 import {UserVault} from "./entities/UserVault";
+import {UserStore} from "./entities/UserStore";
 
-const entities = [User, UserSession, UserAvatar, UserVault];
+const entities = [User, UserSession, UserAvatar, UserVault, UserStore];
 
 export class Database {
     private static instance: Database;

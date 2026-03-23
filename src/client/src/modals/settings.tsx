@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from "react";
-import {Button, Entry, LoadingCircle, Modal} from "../UI";
+import {Button, Entry, LoadingCircle, Modal, Switch} from "../UI";
 import {fetchWithCsrf, logout} from "../utils";
 import {modalContainerRef, notificationRef} from "../App";
 import {ChevronLeft, ChevronRight} from "../Icons";
@@ -72,6 +72,8 @@ export function SettingsModal() {
                 return <AccountSettings userData={userData} onBack={() => setCurrentPage("menu")} />;
             case "profile":
                 return <ProfileSettings userData={userData} onBack={() => setCurrentPage("menu")} />;
+            case "appearance":
+                return <AppearanceSettings onBack={() => setCurrentPage("menu")} />;
             case "security":
                 return <SecuritySettings onBack={() => setCurrentPage("menu")} />;
             default:
@@ -96,6 +98,12 @@ export function SettingsModal() {
                             onClick={() => setCurrentPage("profile")}
                         >
                             Profile
+                        </button>
+                        <button 
+                            className={`SidebarItem ${currentPage === "appearance" ? "active" : ""}`}
+                            onClick={() => setCurrentPage("appearance")}
+                        >
+                            Appearance
                         </button>
                         <button 
                             className={`SidebarItem ${currentPage === "security" ? "active" : ""}`}
@@ -135,6 +143,10 @@ function SettingsMenu({ userData, onSelectPage }: { userData: any, onSelectPage:
                 </button>
                 <button className="MenuOption" onClick={() => onSelectPage("profile")}>
                     <span>Profile Settings</span>
+                    <ChevronRight/>
+                </button>
+                <button className="MenuOption" onClick={() => onSelectPage("appearance")}>
+                    <span>Appearance</span>
                     <ChevronRight/>
                 </button>
                 <button className="MenuOption" onClick={() => onSelectPage("security")}>
@@ -225,6 +237,32 @@ function ProfileSettings({ userData, onBack }: { userData: any, onBack: () => vo
                 <Button onClick={handleUpdateDisplayName} disabled={saving} style={{ marginTop: '10px' }}>
                     Update Display Name
                 </Button>
+            </div>
+        </div>
+    );
+}
+
+function AppearanceSettings({ onBack }: { onBack: () => void }) {
+    const [theme, setTheme] = useState(document.documentElement.getAttribute("data-theme") || "dark");
+
+    const toggleTheme = (checked: boolean) => {
+        const newTheme = checked ? "light" : "dark";
+        setTheme(newTheme);
+        document.documentElement.setAttribute("data-theme", newTheme);
+        localStorage.setItem("theme", newTheme);
+    };
+
+    return (
+        <div className="SettingsPage">
+            <div className="PageHeader">
+                <Button className={"mobile-only"} onClick={onBack}><ChevronLeft/>Back</Button>
+                <h2>Appearance</h2>
+            </div>
+            <div className="SettingsSection">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ margin: 0 }}>Light Mode</label>
+                    <Switch checked={theme === "light"} onChange={toggleTheme} />
+                </div>
             </div>
         </div>
     );

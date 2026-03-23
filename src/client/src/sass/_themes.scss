@@ -7,6 +7,9 @@
   --accent-color: #{$white};
   --loading-line-color: #{$white};
   --loading-out-color: #{$gray-600};
+  --secondary-button-bg: #{$gray-700};
+  --secondary-button-text: #{$white};
+  --secondary-button-hover-bg: #{$gray-600};
 
   @media (prefers-color-scheme: dark) {
     --background-color: #{$gray-800};
@@ -16,6 +19,9 @@
     --accent-color: #{$white};
     --loading-line-color: #{$white};
     --loading-out-color: #{$gray-600};
+    --secondary-button-bg: #{$gray-700};
+    --secondary-button-text: #{$white};
+    --secondary-button-hover-bg: #{$gray-600};
   }
 
   &[data-theme='light'] {
@@ -26,6 +32,9 @@
     --accent-color: #{$primary};
     --loading-line-color: #{$primary};
     --loading-out-color: #{$gray-300};
+    --secondary-button-bg: #{$gray-200};
+    --secondary-button-text: #{$gray-900};
+    --secondary-button-hover-bg: #{$gray-300};
   }
 
   &[data-theme='dark'] {
@@ -36,6 +45,9 @@
     --accent-color: #{$white};
     --loading-line-color: #{$white};
     --loading-out-color: #{$gray-600};
+    --secondary-button-bg: #{$gray-700};
+    --secondary-button-text: #{$white};
+    --secondary-button-hover-bg: #{$gray-600};
   }
 }
 

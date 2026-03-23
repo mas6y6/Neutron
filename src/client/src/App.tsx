@@ -23,6 +23,9 @@ function App() {
     setSuperadminStatus = setSuperadmin;
 
     useEffect(() => {
+        const theme = localStorage.getItem("theme") || "dark";
+        document.documentElement.setAttribute("data-theme", theme);
+
         MainApplication().catch((e) => {
             console.error(e);
             modalContainerRef.current?.set(
