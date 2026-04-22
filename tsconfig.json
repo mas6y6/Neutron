@@ -10,7 +10,10 @@
     "experimentalDecorators": true,
     "resolveJsonModule": true,
     "emitDecoratorMetadata": true,
-    "jsx": "react"
+    "jsx": "preserve",
+    "moduleResolution": "node",
+    "lib": ["esnext", "dom"],
+    "isolatedModules": true
   },
-  "include": ["src"]
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
 }

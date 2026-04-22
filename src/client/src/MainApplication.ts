@@ -1,23 +1,26 @@
-import {animationCooldown, fetchWithCsrf, loadVaultKey, logout} from "./utils";
-import {SuperAdminSetupInit} from "./modals/setup";
-import React from "react";
-import {modalContainerRef, notificationRef, ZariumRef, setSuperadminStatus} from "./App";
-import {LoadingModal} from "./UI";
-import {LoginInit} from "./modals/login";
-import {Accountbar, Groups} from "./Zarium";
+import { useAppStore } from "./store";
+import LoadingModal from "./components/LoadingModal.vue";
+import { animationCooldown, fetchWithCsrf, loadVaultKey, logout } from "./utils";
 import VaultSession from "./VaultSession";
+import { h } from "vue";
+
+// @ts-ignore
+import { SuperAdminSetupInit } from "./modals/SuperAdminSetupInit.vue";
+// @ts-ignore
+import { LoginInit } from "./modals/LoginInit.vue";
+// @ts-ignore
+import { Accountbar, Groups } from "./Zarium.vue";
 
 export let ws: WebSocket | null = null;
 
 export async function MainApplication() {
-    modalContainerRef.current?.set(
-        <LoadingModal />
-    );
+    const store = useAppStore();
+    store.setModal(LoadingModal);
 
     let server_status = await (await fetchWithCsrf("/api/status")).json();
     if (!(server_status.ssl_enabled)) {
         if (window.location.protocol !== "https") {
-            notificationRef.current?.add(
+            store.addNotification(
                 {
                     title: "Warning",
                     content: "This server is not using SSL. This is not recommended for production.",
@@ -29,15 +32,15 @@ export async function MainApplication() {
 
     await animationCooldown();
     if (server_status.firstStart == true) {
-        modalContainerRef.current?.set(<SuperAdminSetupInit />);
+        store.setModal(() => h(SuperAdminSetupInit));
     } else {
         const auth = await authCheck();
         if (!auth.success) {
-            modalContainerRef.current?.set(<LoginInit motd={server_status.motd} version={server_status.version}/>);
+            store.setModal(() => h(LoginInit, { motd: server_status.motd, version: server_status.version }));
         } else {
-            setSuperadminStatus(auth.superadmin || false);
+            store.setSuperadmin(auth.superadmin || false);
             await animationCooldown();
-            modalContainerRef.current?.close();
+            store.closeModal();
             await renderApplication();
         }
     }
@@ -69,6 +72,7 @@ export async function authCheck() {
 }
 
 export async function renderApplication() {
+    const store = useAppStore();
     const res = await (await fetchWithCsrf("/api/auth/get-user-data")).json();
     let server_status = await (await fetchWithCsrf("/api/status")).json();
 
@@ -88,9 +92,17 @@ export async function renderApplication() {
         return;
     }
 
-    ZariumRef.current?.show();
-    ZariumRef.current?.getSidebarContent()?.setGroups(<Groups/>);
-    ZariumRef.current?.getSidebarContent()?.setAccountbar(<Accountbar id={res.id} username={res.username} displayname={res.displayname}/>);
+    // In Vue, we use the store to manage visibility and content
+    // Zarium component will watch these or we can use a store for sidebar
+    // For now, let's assume we have a sidebar store or similar
+    // Or we can just let Zarium handle it itself upon mounting/showing
+    
+    // showZarium state in store could be used
+    store.showZariumView();
+    // In Vue, we can pass components or just data
+    // Let's use components for now to keep it similar
+    store.setGroups(Groups);
+    store.setAccountbar(() => h(Accountbar, { id: res.id, username: res.username, displayname: res.displayname }));
 
     openWebsocket();
 }
@@ -100,11 +112,12 @@ function openWebsocket() {
     ws! = new WebSocket(`${protocol}://${location.host}/api/session_ws`);
 
     ws!.onmessage = async (event) => {
+        const store = useAppStore();
         const data = JSON.parse(event.data);
         if (data.type === "vault_update") {
             try {
                 await VaultSession.obtainVault();
-                notificationRef.current?.add({
+                store.addNotification({
                     title: "Vault Updated",
                     content: "Your vault has been updated from another session.",
                     type: "info"

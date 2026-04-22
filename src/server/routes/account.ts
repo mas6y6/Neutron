@@ -524,6 +524,7 @@ safeRoute(server.app, '/api/store/submit_store', 'post', async (req: SafeRequest
 
     server.broadcastSameUser(body.toUserId, {
         "type": "store_update",
+        "operation": "create",
         "store": store
     })
 
@@ -578,6 +579,38 @@ safeRoute(server.app, '/api/store/clear_store', 'post', async (req: SafeRequest,
     res.send({
         "detail": "Cleared store"
     })
+}, {
+    require_auth: true
+});
+
+safeRoute(server.app, '/api/store/delete_store', 'post', async (req: SafeRequest, res) => {
+    if (!requireJson(req, res)) return;
+
+    const {storeId} = req.body;
+    if (!storeId) {
+        return res.status(400).json({detail: "Missing store ID"});
+    }
+
+    const storeRepo = ZariumServer.getInstance().database.dataSource.getRepository(UserStore);
+    const store = await storeRepo.findOne({
+        where: {id: storeId, userId: req.user?.userId}
+    });
+
+    if (!store) {
+        return res.status(404).json({detail: "Store not found"});
+    }
+
+    await storeRepo.remove(store);
+
+    server.broadcastSameUser(req.user!.userId, {
+        "type": "store_update",
+        "operation": "delete",
+        "storeId": storeId
+    });
+
+    res.send({
+        "detail": "Store deleted"
+    });
 }, {
     require_auth: true
 });

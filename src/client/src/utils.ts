@@ -1,5 +1,5 @@
 import VaultSession from "./VaultSession";
-import {modalContainerRef} from "./App";
+import { useAppStore } from "./store";
 const VAULT_KEY_STORAGE = "vaultKeyBase64";
 
 export async function sleep(ms: number) { return new Promise(resolve => setTimeout(resolve, ms)); }
@@ -135,8 +135,9 @@ export async function logout() {
             console.error("Force logout also failed", forceErr);
         }
     } finally {
+        const store = useAppStore();
         clearVaultKey();
-        modalContainerRef.current?.close();
+        store.closeModal();
         await animationCooldown();
         window.location.reload();
     }
